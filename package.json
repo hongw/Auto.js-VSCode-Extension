@@ -3,7 +3,7 @@
   "displayName": "Autox.js-VSCodeExt",
   "description": "用于在pc上vscode中开发autoxjs的自动化脚本的插件。兼容autojs 和autoxjs,增加功能：usb方式adb进行连接; 右键【文件夹】保存项目到设备;右键【js文件】运行;js文件中点击右上角运行; 结合webpack自动编译，js自动运行到手机",
   "version": "1.110.0",
-  "publisher": "wilinz",
+  "publisher": "soybox",
   "icon": "logo.png",
   "repository": {
     "type": "github",
@@ -54,14 +54,29 @@
       "editor/title": [
         {
           "when": "resourceLangId == javascript",
-          "command": "extension.openDocument",
-          "group": "navigation@2"
+          "command": "extension.run",
+          "group": "navigation"
         },
         {
           "when": "resourceLangId == javascript",
-          "command": "extension.run",
-          "group": "navigation@1"
-        }
+          "command": "extension.save",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == javascript",
+          "command": "extension.runProject",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == javascript",
+          "command": "extension.saveProject",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == javascript",
+          "command": "extension.stopAll",
+          "group": "navigation"
+        }        
       ],
       "explorer/context": [
         {
@@ -85,7 +100,10 @@
       {
         "command": "extension.openDocument",
         "title": "打开文档(Open Document)",
-        "icon": "logo.png",
+        "icon": {
+          "light": "assets/document.svg",
+          "dark": "assets/document.svg"
+        },
         "category": "autoxjs"
       },
       {
@@ -141,7 +159,10 @@
       {
         "command": "extension.run",
         "title": "运行脚本(Run)",
-        "icon": "play.png",
+        "icon": {
+          "light": "assets/play.svg",
+          "dark": "assets/play.svg"
+        },
         "category": "autoxjs"
       },
       {
@@ -152,11 +173,19 @@
       {
         "command": "extension.stop",
         "title": "停止当前脚本(Stop)",
+        "icon": {
+          "light": "assets/stop.svg",
+          "dark": "assets/stop.svg"
+        },
         "category": "autoxjs"
       },
       {
         "command": "extension.stopAll",
         "title": "停止所有脚本(Stop All)",
+        "icon": {
+          "light": "assets/stop.svg",
+          "dark": "assets/stop.svg"
+        },
         "category": "autoxjs"
       },
       {
@@ -167,6 +196,10 @@
       {
         "command": "extension.save",
         "title": "保存到所有设备(Save)",
+        "icon": {
+          "light": "assets/save.svg",
+          "dark": "assets/save.svg"
+        },
         "category": "autoxjs"
       },
       {
@@ -182,11 +215,19 @@
       {
         "command": "extension.saveProject",
         "title": "保存项目到设备(Save Project)",
+        "icon": {
+          "light": "assets/save-project.svg",
+          "dark": "assets/save-project.svg"
+        },
         "category": "autoxjs"
       },
       {
         "command": "extension.runProject",
         "title": "运行项目(Run Project)",
+        "icon": {
+          "light": "assets/play-project.svg",
+          "dark": "assets/play-project.svg"
+        },
         "category": "autoxjs"
       }
     ],

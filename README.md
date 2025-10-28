@@ -21,11 +21,14 @@
 * 在VS Code命令中增加Run, Stop, Rerun, Stop all等选项。可以在手机与电脑连接后把vscode编辑器中的脚本推送到AutoJs中执行，或者停止AutoJs中运行的脚本。
 * 在Autox.js扫码连接电脑
 * 通过数据线(ADB)连接电脑
+* 状态栏指示器显示服务器状态，点击可快速启动/停止服务器
 
 ## Usage
 
 ### Step 1
 按 `Ctrl+Shift+P` 或点击"查看"->"命令面板"可调出命令面板，输入 `Autox.js` 可以看到几个命令，移动光标到命令`Auto.js Autox,js: Start All Server`，按回车键执行该命令。
+
+你也可以直接点击VS Code底部状态栏左侧的 **"Auto.js: Stopped"** 指示器来快速启动服务器。
 
 如果你想使用数据线连接电脑，但是你调用命令后，VS Code右下角没有显示 _"ADB: Tracking started"_ ，你需要先启动或安装ADB服务，启动命令：```adb start-server```。下载页面：[ADB(中国站)](https://developer.android.google.cn/studio/releases/platform-tools) 或 [ADB(国际站)](https://developer.android.com/studio/releases/platform-tools)，然后在adb所在的目录运行```./adb start-server```。
 

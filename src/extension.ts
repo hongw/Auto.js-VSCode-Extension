@@ -8,8 +8,11 @@ import * as path from "path";
 
 let server = new AutoJsDebugServer(9317);
 let recentDevice = null;
+let statusBarItem: vscode.StatusBarItem;
+
 server
   .on('connect', () => {
+    updateStatusBar(true);
     let servers = server.getIPs().join(":" + server.getPort() + " or ") + ":" + server.getPort();
     let showQrcode = "Show QR code"
     vscode.window.showInformationMessage(`Auto.js Autox.js \r\n server running on ${servers}`, showQrcode).then((result) => {
@@ -19,9 +22,11 @@ server
     });
   })
   .on('connected', () => {
+    updateStatusBar(true);
     vscode.window.showInformationMessage('Auto.js Server already running');
   })
   .on('disconnect', () => {
+    updateStatusBar(false);
     vscode.window.showInformationMessage('Auto.js Server stopped');
   })
   .on('adb:tracking_start', () => {
@@ -64,6 +69,24 @@ server
     }
   })
 
+function updateStatusBar(isRunning: boolean) {
+  if (!statusBarItem) {
+    return;
+  }
+  
+  if (isRunning) {
+    statusBarItem.text = "$(debug-start) Auto.JS: Running";
+    statusBarItem.tooltip = "Auto.JS server is running. Click to stop.";
+    statusBarItem.command = "extension.stopServer";
+    statusBarItem.backgroundColor = undefined;
+  } else {
+    statusBarItem.text = "$(debug-stop) Auto.JS: Stopped";
+    statusBarItem.tooltip = "Auto.JS server is stopped. Click to start.";
+    statusBarItem.command = "extension.startServer";
+    statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+  }
+  statusBarItem.show();
+}
 
 
 
@@ -449,8 +472,15 @@ const commands = ['startAllServer', 'stopAllServer', 'startServer', 'stopServer'
   'stopTrackADBDevices', 'manuallyConnectADB', 'manuallyDisconnect', 'showServerAddress', 'showQrCode', 'openDocument', 'run', 'runOnDevice',
   'stop', 'stopAll', 'rerun', 'save', 'saveToDevice', 'newProject', 'runProject', 'saveProject'];
 
+
 export function activate(context: vscode.ExtensionContext) {
   console.log('extension "Autox.js-VSCode-Extension " is now active.');
+  
+  // Create status bar item
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  updateStatusBar(false); // Initialize as stopped
+  context.subscriptions.push(statusBarItem);
+  
   commands.forEach((command) => {
     let action: Function = extension[command];
     context.subscriptions.push(vscode.commands.registerCommand('extension.' + command, action.bind(extension)));
@@ -463,3 +493,4 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
   server.disconnect();
 }
+
