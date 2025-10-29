@@ -171,6 +171,31 @@ export class AutoJsDebugServer extends EventEmitter {
         response.end("this commond is:" + queryObj.cmd + "-->" + queryObj.path);
         this.emit('cmd', queryObj.cmd, queryObj.path);
         console.log(queryObj.cmd, queryObj.path);
+      } else if (urlObj.pathname == "/save" && request.method == "POST") {
+        let body = '';
+        request.on('data', chunk => {
+          body += chunk.toString();
+        });
+        request.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const { filename, content } = data;
+            
+            if (!filename || !content) {
+              response.writeHead(400);
+              response.end(JSON.stringify({ error: 'Missing filename or content' }));
+              return;
+            }
+            
+            this.emit('save_file', filename, content);
+            response.writeHead(200);
+            response.end(JSON.stringify({ success: true, message: 'File saved' }));
+          } catch (error) {
+            console.error('Error processing save request:', error);
+            response.writeHead(500);
+            response.end(JSON.stringify({ error: 'Internal server error' }));
+          }
+        });
       } else {
         response.writeHead(404);
         response.end();
