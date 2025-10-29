@@ -77,7 +77,7 @@ function updateStatusBar(isRunning: boolean) {
   if (!statusBarItem) {
     return;
   }
-  
+
   if (isRunning) {
     statusBarItem.text = "$(debug-start) Auto.JS: Running";
     statusBarItem.tooltip = "Auto.JS server is running. Click to stop.";
@@ -91,9 +91,6 @@ function updateStatusBar(isRunning: boolean) {
   }
   statusBarItem.show();
 }
-
-
-
 
 class Extension {
   private documentViewPanel: any = undefined;
@@ -322,10 +319,12 @@ class Extension {
     server.sendCommand('stopAll');
 
   }
+
   rerun(url?) {
     this.runOrRerun('rerun', url);
 
   }
+
   runOrRerun(cmd, url?) {
     console.log("url-->", url);
     let text = "";
@@ -355,6 +354,7 @@ class Extension {
   runOnDevice() {
     this.selectDevice(device => this.runOn(device));
   }
+
   selectDevice(callback) {
     let devices: Array<Device> = server.devices;
     if (recentDevice) {
@@ -373,6 +373,7 @@ class Extension {
         callback(device);
       });
   }
+
   runOn(target: AutoJsDebugServer | Device) {
     let editor = vscode.window.activeTextEditor;
     target.sendCommand('run', {
@@ -386,12 +387,12 @@ class Extension {
   save(url?) {
     this.saveTo(server, url);
   }
+
   saveToDevice() {
     this.selectDevice(device => this.saveTo(device));
   }
 
   saveTo(target: AutoJsDebugServer | Device, url?) {
-
     let text = "";
     let filename: string;
     if (null != url) {
@@ -437,16 +438,22 @@ class Extension {
       vscode.commands.executeCommand("vscode.openFolder", uri);
     });
   }
+
   runProject() {
     this.sendProjectCommand("run_project");
   }
+
+  saveProject(url?) {
+    this.sendProjectCommand("save_project", url);
+  }  
+
   sendProjectCommand(command: string, url?) {
     console.log("url-->", url);
     let folder = null;
     if (url == null) {
       let folders = vscode.workspace.workspaceFolders;
       if (!folders || folders.length == 0) {
-        vscode.window.showInformationMessage("请打开一个项目的文件夹");
+        vscode.window.showInformationMessage("Please open a project folder");
         return null;
       }
       folder = folders[0].uri;
@@ -464,19 +471,16 @@ class Extension {
     }
     server.sendProjectCommand(folder.fsPath, command);
   }
-  saveProject(url?) {
-    this.sendProjectCommand("save_project", url);
-  }
 
   captureScreen() {
     // Get server IP address
     let serverIp = server.getIPAddress();
     let serverPort = server.getPort();
-    
+
     // Generate filename with timestamp
     let timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').split('.')[0];
     let filename = `screenshots/screenshot_${timestamp}.png`;
-    
+
     // Create the screenshot script that will run on device
     let screenshotScript = `
 console.log("Starting screenshot capture...");
@@ -544,37 +548,37 @@ console.log("Screenshot process completed");
       'name': 'CaptureScreen.js',
       'script': screenshotScript
     });
-    
-    vscode.window.showInformationMessage('正在截图...');
+
+    vscode.window.showInformationMessage('Capturing screenshot...');
   }
 
   saveFileFromDevice(filename: string, base64Content: string) {
     let folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length == 0) {
-      vscode.window.showErrorMessage("请打开一个工作区文件夹");
+      vscode.window.showErrorMessage("Please open a workspace folder");
       return;
     }
-    
+
     let workspaceRoot = folders[0].uri.fsPath;
     let filePath = path.join(workspaceRoot, filename);
     let dirPath = path.dirname(filePath);
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
-    
+
     // Decode base64 and save file
     try {
       let buffer = Buffer.from(base64Content, 'base64');
       fs.writeFileSync(filePath, buffer as Uint8Array);
-      vscode.window.showInformationMessage(`截图已保存: ${filename}`);
-      
+      vscode.window.showInformationMessage(`Screenshot saved: ${filename}`);
+
       // Open the file automatically
       let fileUri = vscode.Uri.file(filePath);
       vscode.commands.executeCommand('vscode.open', fileUri);
     } catch (error) {
-      vscode.window.showErrorMessage(`保存失败: ${error.message}`);
+      vscode.window.showErrorMessage(`Failed to save file: ${error.message}`);
     }
   }
 }
@@ -589,12 +593,12 @@ const commands = ['startAllServer', 'stopAllServer', 'startServer', 'stopServer'
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('extension "Autox.js-VSCode-Extension " is now active.');
-  
+
   // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   updateStatusBar(false); // Initialize as stopped
   context.subscriptions.push(statusBarItem);
-  
+
   commands.forEach((command) => {
     let action: Function = extension[command];
     context.subscriptions.push(vscode.commands.registerCommand('extension.' + command, action.bind(extension)));
