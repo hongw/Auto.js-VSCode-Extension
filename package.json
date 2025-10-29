@@ -10,32 +10,10 @@
     "url": "https://github.com/wilinz/Auto.js-VSCode-Extension"
   },
   "engines": {
-    "vscode": "^1.69.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand:extension.startAllServer",
-    "onCommand:extension.stopAllServer",
-    "onCommand:extension.startTrackADBDevices",
-    "onCommand:extension.stopTrackADBDevices",
-    "onCommand:extension.manuallyConnectADB",
-    "onCommand:extension.manuallyDisconnect",
-    "onCommand:extension.showQrCode",
-    "onCommand:extension.showServerAddress",
-    "onCommand:extension.openDocument",
-    "onCommand:extension.startServer",
-    "onCommand:extension.stopServer",
-    "onCommand:extension.run",
-    "onCommand:extension.runOnDevice",
-    "onCommand:extension.stop",
-    "onCommand:extension.stopAll",
-    "onCommand:extension.save",
-    "onCommand:extension.saveToDevice",
-    "onCommand:extension.newProject",
-    "onCommand:extension.runProject",
-    "onCommand:extension.saveProject"
   ],
   "main": "./out/extension",
   "contributes": {
@@ -74,9 +52,14 @@
         },
         {
           "when": "resourceLangId == javascript",
+          "command": "extension.captureScreen",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == javascript",
           "command": "extension.stopAll",
           "group": "navigation"
-        }        
+        }
       ],
       "explorer/context": [
         {
@@ -227,6 +210,15 @@
         "icon": {
           "light": "assets/play-project.svg",
           "dark": "assets/play-project.svg"
+        },
+        "category": "autoxjs"
+      },
+      {
+        "command": "extension.captureScreen",
+        "title": "截屏(Capture Screen)",
+        "icon": {
+          "light": "assets/camera.svg",
+          "dark": "assets/camera.svg"
         },
         "category": "autoxjs"
       }

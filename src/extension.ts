@@ -68,6 +68,10 @@ server
         break;
     }
   })
+  .on('save_file', (filename: string, base64Content: string) => {
+    vscode.window.showInformationMessage(`Received screenshot: ${filename}`);
+    extension.saveFileFromDevice(filename, base64Content);
+  })
 
 function updateStatusBar(isRunning: boolean) {
   if (!statusBarItem) {
@@ -463,6 +467,116 @@ class Extension {
   saveProject(url?) {
     this.sendProjectCommand("save_project", url);
   }
+
+  captureScreen() {
+    // Get server IP address
+    let serverIp = server.getIPAddress();
+    let serverPort = server.getPort();
+    
+    // Generate filename with timestamp
+    let timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').split('.')[0];
+    let filename = `screenshots/screenshot_${timestamp}.png`;
+    
+    // Create the screenshot script that will run on device
+    let screenshotScript = `
+console.log("Starting screenshot capture...");
+
+// Request screen capture permission
+console.log("Requesting screen capture permission...");
+if (!requestScreenCapture()) {
+  console.error("Failed to request screen capture permission");
+  toast("请求截图权限失败");
+  exit();
+}
+console.log("Screen capture permission granted");
+
+// Capture screenshot
+console.log("Capturing screenshot...");
+let img = captureScreen();
+if (!img) {
+  console.error("Failed to capture screenshot");
+  toast("截图失败");
+  exit();
+}
+console.log("Screenshot captured successfully");
+
+// Convert to base64
+console.log("Converting image to base64...");
+let base64 = images.toBase64(img, "png", 100);
+if (!base64) {
+  console.error("Failed to convert image to base64");
+  toast("图片转换失败");
+  img.recycle();
+  exit();
+}
+console.log("Image converted successfully, size: " + base64.length + " characters");
+
+// Send to server
+let serverUrl = "http://${serverIp}:${serverPort}/save";
+console.log("Sending to server: " + serverUrl);
+try {
+  let response = http.postJson(serverUrl, {
+    filename: "${filename}",
+    content: base64
+  });
+  
+  console.log("Server response status: " + response.statusCode);
+  if (response.statusCode == 200) {
+    console.log("Screenshot saved: ${filename}");
+    toast("截图已保存");
+  } else {
+    console.error("Failed to save screenshot: " + response.statusCode);
+    toast("保存失败");
+  }
+} catch (error) {
+  console.error("Failed to send to server: " + error);
+  toast("发送失败: " + error);
+}
+
+// Release image
+img.recycle();
+console.log("Screenshot process completed");
+`;
+
+    // Send command to run the script
+    server.sendCommand('run', {
+      'id': 'CaptureScreen.js',
+      'name': 'CaptureScreen.js',
+      'script': screenshotScript
+    });
+    
+    vscode.window.showInformationMessage('正在截图...');
+  }
+
+  saveFileFromDevice(filename: string, base64Content: string) {
+    let folders = vscode.workspace.workspaceFolders;
+    if (!folders || folders.length == 0) {
+      vscode.window.showErrorMessage("请打开一个工作区文件夹");
+      return;
+    }
+    
+    let workspaceRoot = folders[0].uri.fsPath;
+    let filePath = path.join(workspaceRoot, filename);
+    let dirPath = path.dirname(filePath);
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    
+    // Decode base64 and save file
+    try {
+      let buffer = Buffer.from(base64Content, 'base64');
+      fs.writeFileSync(filePath, buffer as Uint8Array);
+      vscode.window.showInformationMessage(`截图已保存: ${filename}`);
+      
+      // Open the file automatically
+      let fileUri = vscode.Uri.file(filePath);
+      vscode.commands.executeCommand('vscode.open', fileUri);
+    } catch (error) {
+      vscode.window.showErrorMessage(`保存失败: ${error.message}`);
+    }
+  }
 }
 
 
@@ -470,7 +584,7 @@ export let _context: vscode.ExtensionContext;
 let extension = new Extension();
 const commands = ['startAllServer', 'stopAllServer', 'startServer', 'stopServer', 'startTrackADBDevices',
   'stopTrackADBDevices', 'manuallyConnectADB', 'manuallyDisconnect', 'showServerAddress', 'showQrCode', 'openDocument', 'run', 'runOnDevice',
-  'stop', 'stopAll', 'rerun', 'save', 'saveToDevice', 'newProject', 'runProject', 'saveProject'];
+  'stop', 'stopAll', 'rerun', 'save', 'saveToDevice', 'newProject', 'runProject', 'saveProject', 'captureScreen'];
 
 
 export function activate(context: vscode.ExtensionContext) {
