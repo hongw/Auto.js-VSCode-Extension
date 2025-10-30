@@ -57,12 +57,28 @@ export class FileObserver {
         }).forEach((f: any) => {
             let filePath = path.join(rootPath, f.name);
             let relativePath = path.relative(this.dir, filePath);
+            
             if (f.isDirectory()) {
                 // console.log("目录：" + f.name)
                 this.getFiels(filePath, fileList, rej);
             } else if (f.isFile()) {
                 // console.log("文件：" + f.name)
                 fileList.push(relativePath);
+            } else if (f.isSymbolicLink()) {
+                // Handle symbolic links by checking what they point to
+                try {
+                    let stats = fs.statSync(filePath); // This follows the symlink
+                    if (stats.isDirectory()) {
+                        // console.log("符号链接目录：" + f.name)
+                        this.getFiels(filePath, fileList, rej);
+                    } else if (stats.isFile()) {
+                        // console.log("符号链接文件：" + f.name)
+                        fileList.push(relativePath);
+                    }
+                } catch (error) {
+                    // Broken symlink or permission issue, skip it
+                    console.warn("Skipping broken symlink:", filePath, error.message);
+                }
             } else {
                 // console.log("未知类型：" + f.name)
             }
