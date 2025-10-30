@@ -451,6 +451,10 @@ export class AutoJsDebugServer extends EventEmitter {
       this.emit('log', data['log']);
     });
     device.on('disconnect', this.detachDevice.bind(this, device));
+    // Emit server_started when first device connects
+    if (this.devices.length === 1) {
+      this.emit('server_started');
+    }
   }
 
   private detachDevice(device: Device): void {
@@ -460,6 +464,10 @@ export class AutoJsDebugServer extends EventEmitter {
     var logChannel = this.getLogChannel(device)
     logChannel.dispose();
     this.logChannels.delete(device.toString())
+    // Emit server_stopped when last device disconnects
+    if (this.devices.length === 0) {
+      this.emit('server_stopped');
+    }
   }
 
   /** 创建设备日志打印通道 */
