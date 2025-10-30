@@ -109,7 +109,7 @@ export class ProjectObserser {
                 });
             })
             .then(buffer => {
-                var md5 = cryto.createHash('md5').update(buffer).digest('hex');
+                var md5 = cryto.createHash('md5').update(buffer as Uint8Array).digest('hex');
                 return {
                     buffer: buffer,
                     md5: md5

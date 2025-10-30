@@ -32,50 +32,80 @@
       "editor/title": [
         {
           "when": "resourceLangId == javascript",
+          "command": "extension.startServer",
+          "group": "navigation@100"
+        },
+        {
+          "when": "resourceLangId == javascript && autoxjs.serverStarted",
           "command": "extension.run",
-          "group": "navigation"
+          "group": "navigation@101"
         },
         {
-          "when": "resourceLangId == javascript",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted",
           "command": "extension.save",
-          "group": "navigation"
+          "group": "navigation@102"
         },
         {
-          "when": "resourceLangId == javascript",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted && autoxjs.hasProjectJson",
           "command": "extension.runProject",
-          "group": "navigation"
+          "group": "navigation@103"
         },
         {
-          "when": "resourceLangId == javascript",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted && autoxjs.hasProjectJson",
           "command": "extension.saveProject",
-          "group": "navigation"
+          "group": "navigation@104"
         },
         {
-          "when": "resourceLangId == javascript",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted",
           "command": "extension.captureScreen",
-          "group": "navigation"
+          "group": "navigation@105"
         },
         {
-          "when": "resourceLangId == javascript",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted",
           "command": "extension.stopAll",
-          "group": "navigation"
+          "group": "navigation@106"
+        },
+        {
+          "when": "resourceFilename == project.json",
+          "command": "extension.startServer",
+          "group": "navigation@100"
+        },
+        {
+          "when": "resourceFilename == project.json && autoxjs.serverStarted",
+          "command": "extension.runProject",
+          "group": "navigation@103"
+        },
+        {
+          "when": "resourceFilename == project.json && autoxjs.serverStarted",
+          "command": "extension.saveProject",
+          "group": "navigation@104"
+        },
+        {
+          "when": "resourceFilename == project.json && autoxjs.serverStarted",
+          "command": "extension.stopAll",
+          "group": "navigation@106"
         }
       ],
       "explorer/context": [
         {
-          "when": "explorerResourceIsFolder",
+          "when": "explorerResourceIsFolder && autoxjs.serverStarted",
+          "command": "extension.runProject",
+          "group": "autoxjs@1"
+        },
+        {
+          "when": "explorerResourceIsFolder && autoxjs.serverStarted",
           "command": "extension.saveProject",
-          "group": "navigation"
+          "group": "autoxjs@2"
         },
         {
-          "when": "!explorerResourceIsFolder&&resourceExtname==.js",
-          "command": "extension.rerun",
-          "group": "navigation@1"
+          "when": "!explorerResourceIsFolder&&resourceExtname==.js && autoxjs.serverStarted",
+          "command": "extension.run",
+          "group": "autoxjs@3"
         },
         {
-          "when": "!explorerResourceIsFolder",
+          "when": "!explorerResourceIsFolder&&resourceExtname==.js && autoxjs.serverStarted",
           "command": "extension.save",
-          "group": "navigation@2"
+          "group": "autoxjs@4"
         }
       ]
     },
@@ -112,6 +142,10 @@
       {
         "command": "extension.startServer",
         "title": "开启服务(Start Server), 如有多个同类插件，请禁用其他或本插件",
+        "icon": {
+          "light": "assets/server.svg",
+          "dark": "assets/server.svg"
+        },
         "category": "autoxjs"
       },
       {

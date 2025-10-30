@@ -77,7 +77,7 @@ function updateStatusBar(isRunning: boolean) {
   if (!statusBarItem) {
     return;
   }
-  
+
   if (isRunning) {
     statusBarItem.text = "$(debug-start) Auto.JS: Running";
     statusBarItem.tooltip = "Auto.JS server is running. Click to stop.";
@@ -91,9 +91,6 @@ function updateStatusBar(isRunning: boolean) {
   }
   statusBarItem.show();
 }
-
-
-
 
 class Extension {
   private documentViewPanel: any = undefined;
@@ -322,10 +319,12 @@ class Extension {
     server.sendCommand('stopAll');
 
   }
+
   rerun(url?) {
     this.runOrRerun('rerun', url);
 
   }
+
   runOrRerun(cmd, url?) {
     console.log("url-->", url);
     let text = "";
@@ -355,6 +354,7 @@ class Extension {
   runOnDevice() {
     this.selectDevice(device => this.runOn(device));
   }
+
   selectDevice(callback) {
     let devices: Array<Device> = server.devices;
     if (recentDevice) {
@@ -373,6 +373,7 @@ class Extension {
         callback(device);
       });
   }
+
   runOn(target: AutoJsDebugServer | Device) {
     let editor = vscode.window.activeTextEditor;
     target.sendCommand('run', {
@@ -386,12 +387,12 @@ class Extension {
   save(url?) {
     this.saveTo(server, url);
   }
+
   saveToDevice() {
     this.selectDevice(device => this.saveTo(device));
   }
 
   saveTo(target: AutoJsDebugServer | Device, url?) {
-
     let text = "";
     let filename: string;
     if (null != url) {
@@ -437,16 +438,93 @@ class Extension {
       vscode.commands.executeCommand("vscode.openFolder", uri);
     });
   }
-  runProject() {
-    this.sendProjectCommand("run_project");
+
+  // Find the project folder by looking for project.json
+  findProjectFolder(url?: string): vscode.Uri | null {
+    if (url == null) {
+      return null;
+    }
+
+    let uri = vscode.Uri.parse(url);
+    let currentPath = uri.fsPath;
+
+    // Check if the path is a file or folder
+    try {
+      let stat = fs.statSync(currentPath);
+      if (stat.isFile()) {
+        // Start from the file's directory
+        currentPath = path.dirname(currentPath);
+      }
+    } catch (error) {
+      console.error("Error checking path:", error);
+      return null;
+    }
+
+    // Get workspace folder boundaries
+    let workspaceFolders = vscode.workspace.workspaceFolders;
+    let workspacePaths = workspaceFolders ? workspaceFolders.map(f => f.uri.fsPath) : [];
+
+    // Walk up the directory tree to find project.json
+    while (currentPath) {
+      let projectJsonPath = path.join(currentPath, 'project.json');
+      if (fs.existsSync(projectJsonPath)) {
+        console.log("Found project folder:", currentPath);
+        return vscode.Uri.file(currentPath);
+      }
+
+      // Move to parent directory
+      let parentPath = path.dirname(currentPath);
+      if (parentPath === currentPath) {
+        // Reached the root
+        break;
+      }
+      
+      // Stop if we've moved outside all workspace folders
+      let isInsideWorkspace = workspacePaths.some(wsPath => parentPath.startsWith(wsPath));
+      if (!isInsideWorkspace && workspacePaths.length > 0) {
+        console.log("Reached workspace boundary, stopping search");
+        break;
+      }
+      
+      currentPath = parentPath;
+    }
+
+    return null;
   }
+
+  runProject(url?) {
+    let projectFolder = this.findProjectFolder(url);
+    
+    if (projectFolder) {
+      let folderName = path.basename(projectFolder.fsPath);
+      vscode.window.showInformationMessage(`Running project ${folderName}...`);
+      this.sendProjectCommand("run_project", projectFolder.toString());
+    } else {
+      // No project.json found, let sendProjectCommand use workspace folder
+      this.sendProjectCommand("run_project");
+    }
+  }
+
+  saveProject(url?) {
+    let projectFolder = this.findProjectFolder(url);
+    
+    if (projectFolder) {
+      let folderName = path.basename(projectFolder.fsPath);
+      vscode.window.showInformationMessage(`Saving project ${folderName}...`);
+      this.sendProjectCommand("save_project", projectFolder.toString());
+    } else {
+      // No project.json found, let sendProjectCommand use workspace folder
+      this.sendProjectCommand("save_project");
+    }
+  }
+
   sendProjectCommand(command: string, url?) {
     console.log("url-->", url);
     let folder = null;
     if (url == null) {
       let folders = vscode.workspace.workspaceFolders;
       if (!folders || folders.length == 0) {
-        vscode.window.showInformationMessage("请打开一个项目的文件夹");
+        vscode.window.showInformationMessage("Please open a project folder");
         return null;
       }
       folder = folders[0].uri;
@@ -458,25 +536,18 @@ class Extension {
       server.project && server.project.dispose();
       server.project = new Project(folder);
     }
-    if (!server.project || server.project.folder != folder) {
-      server.project && server.project.dispose();
-      server.project = new Project(folder);
-    }
     server.sendProjectCommand(folder.fsPath, command);
-  }
-  saveProject(url?) {
-    this.sendProjectCommand("save_project", url);
   }
 
   captureScreen() {
     // Get server IP address
     let serverIp = server.getIPAddress();
     let serverPort = server.getPort();
-    
+
     // Generate filename with timestamp
     let timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').split('.')[0];
     let filename = `screenshots/screenshot_${timestamp}.png`;
-    
+
     // Create the screenshot script that will run on device
     let screenshotScript = `
 console.log("Starting screenshot capture...");
@@ -544,37 +615,37 @@ console.log("Screenshot process completed");
       'name': 'CaptureScreen.js',
       'script': screenshotScript
     });
-    
-    vscode.window.showInformationMessage('正在截图...');
+
+    vscode.window.showInformationMessage('Capturing screenshot...');
   }
 
   saveFileFromDevice(filename: string, base64Content: string) {
     let folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length == 0) {
-      vscode.window.showErrorMessage("请打开一个工作区文件夹");
+      vscode.window.showErrorMessage("Please open a workspace folder");
       return;
     }
-    
+
     let workspaceRoot = folders[0].uri.fsPath;
     let filePath = path.join(workspaceRoot, filename);
     let dirPath = path.dirname(filePath);
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
-    
+
     // Decode base64 and save file
     try {
       let buffer = Buffer.from(base64Content, 'base64');
       fs.writeFileSync(filePath, buffer as Uint8Array);
-      vscode.window.showInformationMessage(`截图已保存: ${filename}`);
-      
+      vscode.window.showInformationMessage(`Screenshot saved: ${filename}`);
+
       // Open the file automatically
       let fileUri = vscode.Uri.file(filePath);
       vscode.commands.executeCommand('vscode.open', fileUri);
     } catch (error) {
-      vscode.window.showErrorMessage(`保存失败: ${error.message}`);
+      vscode.window.showErrorMessage(`Failed to save file: ${error.message}`);
     }
   }
 }
@@ -589,12 +660,49 @@ const commands = ['startAllServer', 'stopAllServer', 'startServer', 'stopServer'
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('extension "Autox.js-VSCode-Extension " is now active.');
-  
+
   // Create status bar item
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   updateStatusBar(false); // Initialize as stopped
   context.subscriptions.push(statusBarItem);
+
+  // Initialize server status context
+  vscode.commands.executeCommand('setContext', 'autoxjs.serverStarted', false);
+
+  // Track server status
+  server.on('server_started', () => {
+    vscode.commands.executeCommand('setContext', 'autoxjs.serverStarted', true);
+  });
+
+  server.on('server_stopped', () => {
+    vscode.commands.executeCommand('setContext', 'autoxjs.serverStarted', false);
+  });
+
+  // Update project.json detection context
+  const updateProjectContext = () => {
+    const editor = vscode.window.activeTextEditor;
+    let hasProject = false;
+    
+    if (editor) {
+      const projectFolder = extension.findProjectFolder(editor.document.uri.toString());
+      hasProject = projectFolder !== null;
+    }
+    
+    vscode.commands.executeCommand('setContext', 'autoxjs.hasProjectJson', hasProject);
+  };
+
+  // Update context when active editor changes
+  updateProjectContext();
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateProjectContext));
   
+  // Update context when files are saved (in case project.json is created/modified)
+  context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(() => updateProjectContext()));
+  
+  // Update context when files change
+  context.subscriptions.push(vscode.workspace.onDidCreateFiles(updateProjectContext));
+  context.subscriptions.push(vscode.workspace.onDidDeleteFiles(updateProjectContext));
+  context.subscriptions.push(vscode.workspace.onDidRenameFiles(updateProjectContext));
+
   commands.forEach((command) => {
     let action: Function = extension[command];
     context.subscriptions.push(vscode.commands.registerCommand('extension.' + command, action.bind(extension)));
