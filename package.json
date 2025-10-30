@@ -36,12 +36,12 @@
           "group": "navigation@100"
         },
         {
-          "when": "resourceLangId == javascript && autoxjs.serverStarted",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted && !autoxjs.hasProjectJson",
           "command": "extension.run",
           "group": "navigation@101"
         },
         {
-          "when": "resourceLangId == javascript && autoxjs.serverStarted",
+          "when": "resourceLangId == javascript && autoxjs.serverStarted && !autoxjs.hasProjectJson",
           "command": "extension.save",
           "group": "navigation@102"
         },
